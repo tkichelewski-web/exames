@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Exames Periódicos – Usina Santa Adélia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;0,800;1,800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
+<style>
+:root{--verde:#07583C;--verde2:#0A4A33;--medio:#348964;--lima:#B3DD64;--ambar:#FDB952;--vermelho:#DF4636;--tinta:#263238;--texto:#474A50;--borda:#DDE5DA;--fundo:#F5F7F4}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--fundo);color:var(--tinta);font-family:'Open Sans',system-ui,-apple-system,'Segoe UI',Arial,sans-serif}
+.app{display:flex;flex-wrap:wrap;min-height:100vh}
+.side{flex:1 1 250px;max-width:270px;background:var(--verde);color:#fff;padding:28px 16px;display:flex;flex-direction:column;gap:28px;position:relative;transition:flex-basis .2s,max-width .2s}
+.side .marca{padding:0 10px;display:flex;flex-direction:column;gap:14px}
+.side .marca img{width:150px;height:auto}
+.navb{display:flex;align-items:center;gap:14px;width:100%;height:46px;padding:0 16px;border:0;border-radius:6px;background:transparent;color:#fff;font:inherit;font-size:14px;font-weight:600;text-align:left;cursor:pointer;position:relative}
+.navb:hover{background:#0B6B4A}
+.navb img{width:24px;height:24px;object-fit:contain;flex:none}
+.navb.ativo{background:var(--verde2);color:var(--lima)}
+.navb.ativo::before{content:"";position:absolute;left:0;top:10px;width:8px;height:26px;background:var(--lima);clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
+.navsep{height:1px;background:#2E7A5C;margin:14px 8px}
+.rodape{margin-top:auto;display:flex;gap:10px;align-items:center;font-size:12px;color:#D6E9DD;padding:0 10px;line-height:1.6}
+.rodape img{width:30px;height:30px;object-fit:contain}
+.rodape .velho{color:var(--ambar);font-weight:700}
+.usuario{display:flex;flex-direction:column;gap:6px;font-size:12px;color:#D6E9DD;padding:0 10px;line-height:1.5}
+.usuario b{color:#fff;font-weight:700;word-break:break-word}
+.usuario .acoes{display:flex;gap:12px}
+.usuario a,.usuario button{background:none;border:0;padding:0;font:inherit;color:var(--lima);text-decoration:underline;cursor:pointer}
+.app.recolhido .usuario{display:none}
+#portao{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--fundo)}
+#portao .caixa{max-width:420px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;color:var(--texto);font-size:15px;line-height:1.5}
+#portao .caixa img{width:150px}
+#portao a{color:var(--verde);font-weight:700}
+.recolher{position:absolute;top:14px;right:10px;width:36px;height:36px;border:0;border-radius:6px;background:#0A4A33;color:#B3DD64;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.recolher:hover{background:#0B6B4A}
+.app.recolhido .recolher svg{transform:rotate(180deg)}
+.app.recolhido .side{flex:0 0 84px;max-width:84px;padding:64px 12px 24px}
+.app.recolhido .side .rot,.app.recolhido .side .tag,.app.recolhido .rodape span{display:none}
+.app.recolhido .side .marca{padding:0;align-items:center}
+.app.recolhido .side .marca img{width:52px}
+.app.recolhido .navb{justify-content:center;padding:0}
+.app.recolhido .navb.ativo::before{left:-6px}
+.app.recolhido .recolher{right:24px}
+.app.recolhido .rodape{justify-content:center;padding:0}
+
+.main{flex:999 1 560px;min-width:0;padding:32px 36px 56px;display:flex;flex-direction:column;gap:22px}
+.topo{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px}
+.topo h1{margin:0;display:flex;align-items:center;gap:14px;font-size:34px;font-weight:800;font-style:italic;text-transform:uppercase;color:var(--verde);line-height:1.05}
+.topo h1 img{width:56px;height:56px;object-fit:contain}
+.tag{display:inline-block;align-self:flex-start;padding:6px 22px 6px 16px;background:var(--lima);color:var(--verde);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%)}
+.card{background:#fff;border:1px solid var(--borda);border-radius:10px;padding:22px;min-width:0}
+.card.flush{padding:0;overflow:hidden}
+.cardhead{padding:22px 22px 14px}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between}
+.sec{margin:0;font-size:15px;font-weight:800;font-style:italic;text-transform:uppercase;letter-spacing:.02em;color:var(--verde)}
+.sub{margin:4px 0 0;font-size:12px;color:var(--texto)}
+.filtros{display:flex;flex-direction:column;gap:14px;padding:18px 22px}
+.filtros .campos{display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px}
+.lbl{display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--texto)}
+.lbl input.busca{height:42px;border:1px solid #C5D0C2;border-radius:6px;padding:0 10px;font:inherit;font-weight:400;font-size:14px;letter-spacing:0;text-transform:none;color:var(--tinta);background:#fff;min-width:220px;max-width:300px}
+.lbl input.busca:focus{outline:2px solid var(--lima);border-color:var(--verde)}
+.btn{height:44px;padding:0 26px;border:0;font:inherit;font-size:14px;font-weight:700;cursor:pointer;clip-path:polygon(12px 0,100% 0,calc(100% - 12px) 100%,0 100%)}
+.btn-pri{background:var(--verde);color:#fff}.btn-pri:hover{background:#0B6B4A}
+.btn-sec{background:#E4EBE1;color:var(--verde)}.btn-sec:hover{background:#D6E2D2}
+#chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;color:var(--texto)}
+.chip{display:inline-flex;align-items:center;gap:4px;height:32px;padding:0 4px 0 12px;border-radius:16px;background:#EEF7DE;color:var(--verde);font-weight:600}
+.chip button{width:28px;height:28px;border:0;border-radius:14px;background:transparent;color:var(--verde);font-size:16px;cursor:pointer}
+.chip button:hover{background:#DCEFC0}
+
+.dd{position:relative}
+.dd-btn{display:flex;align-items:center;justify-content:space-between;gap:10px;height:42px;min-width:170px;max-width:280px;padding:0 12px;border:1px solid #C5D0C2;border-radius:6px;background:#fff;color:var(--tinta);font:inherit;font-size:14px;font-weight:400;letter-spacing:0;text-transform:none;cursor:pointer;text-align:left}
+.dd-btn:hover{border-color:var(--medio)}
+.dd-btn.tem{border-color:var(--verde);background:#F3FAE9;color:var(--verde);font-weight:600}
+.dd-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dd-pan{position:absolute;z-index:20;top:calc(100% + 6px);left:0;width:340px;max-width:86vw;background:#fff;border:1px solid var(--borda);border-radius:8px;box-shadow:0 10px 28px rgba(7,88,60,.18);padding:10px;text-transform:none;letter-spacing:0}
+.dd-busca{width:100%;height:38px;border:1px solid #C5D0C2;border-radius:6px;padding:0 10px;font:inherit;font-size:14px;margin-bottom:8px}
+.dd-acoes{display:flex;gap:8px;margin-bottom:6px}
+.dd-acoes button{border:0;background:#E4EBE1;color:var(--verde);font:inherit;font-size:12px;font-weight:700;padding:6px 10px;border-radius:4px;cursor:pointer}
+.dd-acoes button:hover{background:#D6E2D2}
+.dd-lista{max-height:280px;overflow-y:auto;display:flex;flex-direction:column}
+.dd-op{display:flex;align-items:flex-start;gap:10px;padding:9px 8px;border-radius:4px;font-size:14px;font-weight:400;color:var(--tinta);cursor:pointer;line-height:1.35}
+.dd-op:hover{background:#F3FAE9}
+.dd-op input{width:18px;height:18px;margin:1px 0 0;accent-color:var(--verde);flex:none}
+.dd-op[hidden]{display:none}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px}
+.kpi{display:flex;gap:14px;align-items:center}
+.ico{width:60px;height:60px;flex:none;display:flex;align-items:center;justify-content:center;background:#EEF7DE;clip-path:polygon(14px 0,100% 0,calc(100% - 14px) 100%,0 100%)}
+.ico.escuro{background:var(--verde)}
+.ico img{width:38px;height:38px;object-fit:contain}
+.kpi-l{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--texto)}
+.kpi-v{font-size:30px;font-weight:800;color:var(--tinta);font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi .sub{margin:0}
+#tela{display:flex;flex-direction:column;gap:22px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:20px}
+.stack{display:flex;flex-direction:column;gap:14px;margin-top:16px}
+.dircard{background:var(--verde);color:#fff;border-radius:10px;padding:18px 20px;display:grid;grid-template-columns:1fr auto;gap:10px 16px;align-items:center}
+.dirnome{display:flex;align-items:center;gap:12px;font-weight:700;font-size:15px}
+.dirico{width:52px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;background:var(--verde2);clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)}
+.dirico img{width:32px;height:32px;object-fit:contain}
+.dirval{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums}
+.dirbar{grid-column:1/-1;height:10px;border-radius:5px;background:var(--verde2);overflow:hidden}
+.dirbar div{height:100%;background:var(--lima);border-radius:5px}
+.dirsub{font-size:12px;color:#D6E9DD}.dirpend{font-size:12px;font-weight:700;color:var(--ambar);text-align:right}
+.colunas{display:flex;align-items:flex-end;justify-content:center;gap:8px;min-height:240px;margin-top:20px;margin-bottom:46px;padding:0 4px;border-bottom:2px solid var(--verde)}
+.col{flex:1 1 0;min-width:0;max-width:84px;display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;cursor:default}
+.col::after{content:"";position:absolute;inset:-6px 0 0}
+.colv{font-weight:800;font-size:13px;white-space:nowrap}
+.colb{width:100%;max-width:56px;background:var(--medio);clip-path:polygon(10px 0,100% 0,100% 100%,0 100%,0 10px)}
+.col:hover .colb{background:var(--verde)}
+.coll{position:absolute;top:100%;margin-top:10px;width:100%;text-align:center;font-size:12px;color:var(--texto);white-space:nowrap}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#fff;font-weight:700;padding:12px 14px;background:var(--verde);white-space:nowrap}
+.tbl th.ord{cursor:pointer;user-select:none}.tbl th.ord:hover{background:#0B6B4A}
+.tbl th .seta{color:var(--lima)}
+.tbl td{padding:12px 14px;border-bottom:1px solid #E6ECE3;color:var(--tinta);vertical-align:top}
+.tbl tbody tr:nth-child(even) td{background:#F6FAF2}
+.tbl tbody tr:hover td{background:#EEF7DE}
+.num{text-align:right;font-variant-numeric:tabular-nums}.b{font-weight:700}.nw{white-space:nowrap}.muted{color:var(--texto)}
+.tbl th.num{text-align:right}
+.scroll{overflow-x:auto}
+.bar{height:10px;border-radius:5px;background:#E4EBE1;overflow:hidden;margin-top:4px;min-width:120px}
+.bar>div{height:100%;border-radius:5px;background:var(--medio)}
+.pill{display:inline-block;padding:3px 9px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap}
+.p-ok{background:#E3F1E8;color:#07583C}.p-pe{background:#FCE6C0;color:#44361B}.p-at{background:#FCDFDE;color:#8C2921}
+.mais{padding:16px 22px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;font-size:13px;color:var(--texto)}
+.vazio{padding:22px;color:var(--texto);font-size:14px}
+.tip{position:fixed;pointer-events:none;z-index:50;display:none;background:#fff;color:var(--tinta);border:1px solid var(--borda);border-radius:8px;padding:10px 12px;font-size:12.5px;box-shadow:0 10px 28px rgba(7,88,60,.18);max-width:320px}
+.tip .t{font-weight:800;color:var(--verde);margin-bottom:4px}
+.tip .r{font-variant-numeric:tabular-nums;line-height:1.6}
+
+@media (max-width:760px){
+  .side{max-width:none;flex-basis:100%;padding:18px 16px;gap:16px}
+  .rodape{display:none}
+  .main{padding:20px 16px 40px}
+  .grid2{grid-template-columns:1fr}
+  .topo h1{font-size:26px}
+  .topo h1 img{width:44px;height:44px}
+  .colunas{gap:4px}
+  .colv{font-size:10px}
+  .coll{font-size:10px}
+  .lbl,.dd-btn,.lbl input.busca{width:100%;max-width:none}
+  .filtros .campos>*{flex:1 1 140px}
+  .recolher{top:14px;right:14px}
+  .app.recolhido .side{flex:1 1 100%;max-width:none;padding:14px 16px}
+  .app.recolhido .side nav,.app.recolhido .rodape{display:none}
+  .app.recolhido .side .marca{flex-direction:row;align-items:center}
+  .app.recolhido .side .marca img{width:110px}
+  .app.recolhido .recolher svg{transform:rotate(-90deg)}
+  .recolher svg{transform:rotate(90deg)}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+<aside class="side">
+  <button type="button" id="recolher" class="recolher" aria-expanded="true" aria-label="Recolher menu" title="Recolher menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></button>
+  <div class="marca"><img src="img/logo.svg" alt="Usina Santa Adélia"><span class="tag">Exames Periódicos</span></div>
+  <nav aria-label="Menu principal" style="display:flex;flex-direction:column;gap:4px">
+    <button type="button" class="navb" data-tab="geral"><img src="img/alvo.png" alt=""><span class="rot">Visão geral</span></button>
+    <button type="button" class="navb" data-tab="rel"><img src="img/lista.png" alt=""><span class="rot">Relatório por colaborador</span></button>
+    <div class="navsep"></div>
+    <button type="button" class="navb" id="exportar2"><img src="img/exportar.png" alt=""><span class="rot">Exportar Excel</span></button>
+  </nav>
+  <div class="usuario" id="usuario" hidden></div>
+  <div class="rodape"><img src="img/relogio.png" alt=""><span><span id="atualizado">Atualização automática</span><br>Fonte: Senior (Power BI)</span></div>
+</aside>
+<main class="main">
+  <div class="topo">
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <span class="tag">Saúde ocupacional · SSMA</span>
+      <h1><img src="img/capacete.png" alt=""><span id="titulo">Visão geral</span></h1>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button type="button" class="btn btn-pri" id="exportar">Exportar Excel</button></div>
+  </div>
+  <section class="card filtros" aria-label="Filtros">
+    <div class="campos">
+      <div class="lbl"><span>Safra</span><div class="dd" data-campo="safra"></div></div>
+      <div class="lbl"><span>Mês</span><div class="dd" data-campo="mes"></div></div>
+      <div class="lbl"><span>Unidade</span><div class="dd" data-campo="un"></div></div>
+      <div class="lbl"><span>Diretoria</span><div class="dd" data-campo="dir"></div></div>
+      <div class="lbl"><span>Gerência</span><div class="dd" data-campo="ger"></div></div>
+      <label class="lbl"><span>Nome ou matrícula</span><input type="search" class="busca" id="busca" placeholder="Buscar colaborador…"></label>
+      <button type="button" class="btn btn-sec" id="limpar" style="margin-left:auto">Limpar filtros</button>
+    </div>
+    <div id="chips" hidden></div>
+  </section>
+  <div class="kpis">
+    <div class="card kpi"><div class="ico"><img src="img/prancheta.png" alt=""></div><div><div class="kpi-l">Previstos</div><div class="kpi-v" id="kPrev">–</div><div class="sub" id="kPrevSub"></div></div></div>
+    <div class="card kpi"><div class="ico"><img src="img/check.png" alt=""></div><div><div class="kpi-l">Realizados</div><div class="kpi-v" id="kReal">–</div><div class="sub">exames clínicos concluídos</div></div></div>
+    <div class="card kpi"><div class="ico"><img src="img/alerta.png" alt=""></div><div><div class="kpi-l">Pendentes</div><div class="kpi-v" id="kPend" style="color:#DF4636">–</div><div class="sub">previstos ainda não realizados</div></div></div>
+    <div class="card kpi"><div class="ico escuro"><img src="img/alvo.png" alt=""></div><div><div class="kpi-l">Aderência</div><div class="kpi-v" id="kAder">–</div><div class="sub">realizados ÷ previstos</div></div></div>
+  </div>
+  <div id="tela"></div>
+</main>
+</div>
+<div class="tip" id="tip"></div>
+<div id="portao" role="status" aria-live="polite"><div class="caixa"><img src="img/logo.svg" alt="Usina Santa Adélia" style="background:var(--verde);padding:16px 22px;border-radius:14px;box-sizing:content-box"><span id="portao-msg">Verificando seu acesso…</span></div></div>
+
+<script>function iniciarPainel() {
+  'use strict';
+  const D = window.DADOS || { atualizado: null, linhas: [] };
+  const MESN = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const MESA = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const UNL = { JB: 'Jaboticabal', PB: 'Pereira Barreto', PI: 'Pitangueiras' };
+
+  // linha: [unidade, diretoria, gerencia, matricula, nome, safra, ano, mes, previsto, realizado]
+  const ROWS = D.linhas.map(l => ({
+    un: l[0] || '—', dir: l[1] || 'Não identificado', ger: l[2] || 'Não identificado', mat: l[3], nome: l[4] || '',
+    safra: l[5] || '', ano: l[6], m: l[7], mes: l[6] + '-' + String(l[7]).padStart(2, '0'),
+    prev: l[8] || 0, real: l[9] || 0
+  }));
+  ROWS.forEach(r => { r.pend = Math.max(0, r.prev - r.real); });
+
+  // ---------- utilidades
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  const nf = new Intl.NumberFormat('pt-BR');
+  const n = v => nf.format(v || 0);
+  const pct = v => v == null ? '—' : (Math.round(v * 10) / 10).toFixed(1).replace('.', ',') + '%';
+  const uniq = a => Array.from(new Set(a.filter(Boolean))).sort((x, y) => String(x).localeCompare(String(y), 'pt-BR'));
+  const mesLabel = m => m ? MESN[parseInt(m.slice(5), 10) - 1] + '/' + m.slice(2, 4) : '';
+  const mesCurto = m => MESA[parseInt(m.slice(5), 10) - 1] + '/' + m.slice(2, 4);
+  const inc = (lista, v) => !lista.length || lista.indexOf(v) >= 0;
+  const soma = rs => { let p = 0, r = 0; rs.forEach(x => { p += x.prev; r += x.real; }); return { prev: p, real: r, pend: Math.max(0, p - r), ad: p ? r / p * 100 : null }; };
+  const agrupar = (rs, campo) => { const g = {}; rs.forEach(r => { (g[r[campo]] = g[r[campo]] || []).push(r); }); return Object.keys(g).map(k => Object.assign({ nome: k, rows: g[k] }, soma(g[k]))); };
+
+  // ---------- carimbo de atualização
+  if (D.atualizado) {
+    const dt = new Date(D.atualizado);
+    const velho = Date.now() - dt.getTime() > 8 * 3600 * 1000;
+    $('atualizado').innerHTML = (velho ? '<span class="velho">Desatualizado · </span>' : '') + 'Atualizado em ' + dt.toLocaleDateString('pt-BR') + ' às ' + dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // ---------- estado e filtros
+  const CAMPOS = ['safra', 'mes', 'un', 'dir', 'ger'];
+  const NOMES = { safra: ['Safra', 'Todas', 'safras'], mes: ['Mês', 'Todos', 'meses'], un: ['Unidade', 'Todas', 'unidades'], dir: ['Diretoria', 'Todas', 'diretorias'], ger: ['Gerência', 'Todas', 'gerências'] };
+  const hoje = new Date();
+  const sAno = hoje.getMonth() + 1 >= 4 ? hoje.getFullYear() : hoje.getFullYear() - 1;
+  const SAFRA_ATUAL = String(sAno).slice(2) + '/' + String(sAno + 1).slice(2);
+  const MES_ATUAL = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0');
+  const state = { tab: 'geral', safra: [], mes: [], un: [], dir: [], ger: [], busca: '', aberto: null, ddBusca: {}, limite: 100, ord: 'mes', dirOrd: 1 };
+  if (ROWS.some(r => r.safra === SAFRA_ATUAL)) state.safra = [SAFRA_ATUAL];
+  if (ROWS.some(r => r.mes === MES_ATUAL)) state.mes = [MES_ATUAL];
+
+  const rotulo = (c, v) => c === 'mes' ? mesLabel(v) : (c === 'un' ? (UNL[v] ? v + ' – ' + UNL[v] : v) : v);
+  function opcoesDe(c) {
+    if (c === 'safra') return uniq(ROWS.map(r => r.safra)).reverse();
+    const b0 = ROWS.filter(r => inc(state.safra, r.safra));
+    if (c === 'mes') return uniq(b0.map(r => r.mes)).sort();
+    const b1 = b0.filter(r => inc(state.mes, r.mes));
+    if (c === 'un') return uniq(b1.map(r => r.un));
+    const b2 = b1.filter(r => inc(state.un, r.un));
+    if (c === 'dir') return uniq(b2.map(r => r.dir));
+    return uniq(b2.filter(r => inc(state.dir, r.dir)).map(r => r.ger));
+  }
+  function filtradosSemBusca() {
+    return ROWS.filter(r => inc(state.safra, r.safra) && inc(state.mes, r.mes) && inc(state.un, r.un) && inc(state.dir, r.dir) && inc(state.ger, r.ger));
+  }
+  function filtrados() {
+    const q = state.busca.trim().toLowerCase();
+    const base = filtradosSemBusca();
+    return q ? base.filter(r => r.nome.toLowerCase().indexOf(q) >= 0 || String(r.mat).indexOf(q) >= 0) : base;
+  }
+
+  const CHEV = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>';
+  function montarFiltros() {
+    CAMPOS.forEach(c => { const ops = opcoesDe(c); state[c] = state[c].filter(v => ops.indexOf(v) >= 0); });
+    CAMPOS.forEach(c => {
+      const el = document.querySelector('.dd[data-campo="' + c + '"]');
+      const ops = opcoesDe(c), sel = state[c], aberto = state.aberto === c;
+      const fem = c !== 'mes';
+      const txt = !sel.length ? NOMES[c][1] : (sel.length === 1 ? rotulo(c, sel[0]) : sel.length + ' ' + NOMES[c][2] + ' selecionad' + (fem ? 'as' : 'os'));
+      const busca = state.ddBusca[c] || '';
+      const lista = el.querySelector('.dd-lista');
+      const scroll = lista ? lista.scrollTop : 0;
+      el.innerHTML = `
+        <button type="button" class="dd-btn${sel.length ? ' tem' : ''}" aria-haspopup="true" aria-expanded="${aberto}" aria-label="${NOMES[c][0]}: ${esc(txt)}"><span class="dd-txt">${esc(txt)}</span>${CHEV}</button>
+        <div class="dd-pan"${aberto ? '' : ' hidden'}>
+          ${ops.length > 8 ? `<input type="search" class="dd-busca" placeholder="Buscar ${NOMES[c][0].toLowerCase()}…" value="${esc(busca)}" aria-label="Buscar ${NOMES[c][0].toLowerCase()}">` : ''}
+          <div class="dd-acoes"><button type="button" data-dd="todos">Marcar todos</button><button type="button" data-dd="limpar">Limpar</button></div>
+          <div class="dd-lista">${ops.map(v => { const l = rotulo(c, v); const vis = !busca || l.toLowerCase().includes(busca.toLowerCase()); return `<label class="dd-op"${vis ? '' : ' hidden'}><input type="checkbox" value="${esc(v)}"${sel.indexOf(v) >= 0 ? ' checked' : ''}><span>${esc(l)}</span></label>`; }).join('') || '<p class="sub" style="padding:8px">Nenhuma opção para os filtros atuais.</p>'}</div>
+        </div>`;
+      if (aberto) { const nl = el.querySelector('.dd-lista'); if (nl) nl.scrollTop = scroll; }
+    });
+    const chips = [];
+    CAMPOS.forEach(c => state[c].forEach(v => chips.push([c, v, NOMES[c][0] + ': ' + rotulo(c, v)])));
+    $('chips').innerHTML = chips.length ? '<span>Filtros ativos (valem para todas as telas e para o Excel):</span>' + chips.map(ch => `<span class="chip">${esc(ch[2])}<button type="button" data-tira="${ch[0]}" data-valor="${esc(ch[1])}" aria-label="Remover filtro ${esc(ch[2])}">×</button></span>`).join('') : '';
+    $('chips').hidden = !chips.length;
+  }
+
+  // ---------- KPIs
+  function kpis(fil) {
+    const k = soma(fil);
+    $('kPrev').textContent = n(k.prev);
+    $('kPrevSub').textContent = n(new Set(fil.filter(r => r.prev).map(r => r.mat)).size) + ' colaboradores';
+    $('kReal').textContent = n(k.real);
+    $('kPend').textContent = n(k.pend);
+    $('kAder').textContent = pct(k.ad);
+  }
+
+  // ---------- telas
+  const ICONE_DIR = d => /agr[ií]col/i.test(d) ? 'trator' : (/industri/i.test(d) ? 'industria' : 'prancheta');
+  function telaGeral(fil) {
+    const dirs = agrupar(fil, 'dir').filter(g => g.prev > 0).sort((a, b) => b.prev - a.prev);
+    const dirHtml = dirs.length ? dirs.map(g => `
+      <div class="dircard">
+        <div class="dirnome"><span class="dirico"><img src="img/${ICONE_DIR(g.nome)}.png" alt=""></span>${esc(g.nome)}</div>
+        <div class="dirval">${pct(g.ad)}</div>
+        <div class="dirbar"><div style="width:${Math.min(100, g.ad || 0).toFixed(1)}%"></div></div>
+        <div class="dirsub">${n(g.real)} de ${n(g.prev)} exames realizados</div>
+        <div class="dirpend">${g.pend ? n(g.pend) + ' pendente(s)' : ''}</div>
+      </div>`).join('') : '<p class="vazio">Sem exames previstos para os filtros selecionados.</p>';
+
+    // aderência por mês: só meses até o atual, últimos 12
+    // ignora o filtro de mês para mostrar a evolução da safra
+    const q = state.busca.trim().toLowerCase();
+    const semMes = ROWS.filter(r => inc(state.safra, r.safra) && inc(state.un, r.un) && inc(state.dir, r.dir) && inc(state.ger, r.ger) &&
+      (!q || r.nome.toLowerCase().indexOf(q) >= 0 || String(r.mat).indexOf(q) >= 0));
+    const meses = agrupar(semMes.filter(r => r.mes <= MES_ATUAL), 'mes').filter(g => g.prev > 0).sort((a, b) => a.nome < b.nome ? -1 : 1).slice(-12);
+    const colHtml = meses.length ? `<div class="colunas">${meses.map((g, i) => `
+        <div class="col" data-mi="${i}"><span class="colv">${pct(g.ad)}</span><div class="colb" style="height:${Math.max(4, Math.min(100, g.ad || 0) * 1.9).toFixed(0)}px"></div><span class="coll">${mesCurto(g.nome)}</span></div>`).join('')}</div>`
+      : '<p class="vazio">Sem meses concluídos para os filtros selecionados.</p>';
+
+    const gers = agrupar(fil, 'ger').filter(g => g.prev > 0).sort((a, b) => (a.ad - b.ad) || (b.prev - a.prev));
+    const gerHtml = gers.length ? `<div class="scroll"><table class="tbl"><thead><tr><th>Gerência</th><th>Diretoria</th><th class="num">Previstos</th><th class="num">Realizados</th><th class="num">Pendentes</th><th>Aderência</th></tr></thead><tbody>${gers.map(g => `
+        <tr><td class="b">${esc(g.nome)}</td><td class="muted">${esc(g.rows[0].dir)}</td><td class="num">${n(g.prev)}</td><td class="num">${n(g.real)}</td><td class="num">${g.pend ? '<span class="pill p-at">' + n(g.pend) + '</span>' : '<span class="pill p-ok">0</span>'}</td>
+        <td class="nw"><span class="b">${pct(g.ad)}</span><div class="bar"><div style="width:${Math.min(100, g.ad || 0).toFixed(1)}%"></div></div></td></tr>`).join('')}</tbody></table></div>`
+      : '<p class="vazio">Sem exames previstos para os filtros selecionados.</p>';
+
+    $('tela').innerHTML = `
+      <div class="grid2">
+        <section class="card"><h2 class="sec">Resultado por diretoria</h2><p class="sub">Aderência = exames realizados ÷ previstos no período filtrado</p><div class="stack">${dirHtml}</div></section>
+        <section class="card"><h2 class="sec">Aderência por mês</h2><p class="sub">Todos os meses da safra até o atual (ignora o filtro de mês). Passe o mouse para ver os números.</p>${colHtml}</section>
+      </div>
+      <section class="card flush"><div class="cardhead"><h2 class="sec">Aderência por gerência</h2><p class="sub">Da menor para a maior aderência</p></div>${gerHtml}</section>`;
+
+    document.querySelectorAll('.col').forEach(el => {
+      const g = meses[+el.getAttribute('data-mi')];
+      const html = `<div class="t">${mesLabel(g.nome)}</div><div class="r">Previstos: ${n(g.prev)}<br>Realizados: ${n(g.real)}<br>Pendentes: ${n(g.pend)}<br>Aderência: ${pct(g.ad)}</div>`;
+      el.addEventListener('mouseenter', e => mostrarTip(e, html));
+      el.addEventListener('mousemove', moverTip);
+      el.addEventListener('mouseleave', esconderTip);
+    });
+  }
+
+  const COLS = [
+    { k: 'un', t: 'Unidade' }, { k: 'dir', t: 'Diretoria' }, { k: 'ger', t: 'Gerência' },
+    { k: 'mat', t: 'Matrícula', num: true }, { k: 'nome', t: 'Nome' }, { k: 'safra', t: 'Safra' },
+    { k: 'mes', t: 'Mês' }, { k: 'prev', t: 'Previsto', num: true }, { k: 'real', t: 'Realizado', num: true }
+  ];
+  function ordenar(rs) {
+    const k = state.ord, d = state.dirOrd;
+    return rs.slice().sort((a, b) => {
+      const x = a[k], y = b[k];
+      let c = typeof x === 'number' ? x - y : String(x).localeCompare(String(y), 'pt-BR');
+      if (!c) c = a.nome.localeCompare(b.nome, 'pt-BR');
+      return c * d;
+    });
+  }
+  function telaRel(fil) {
+    const rs = ordenar(fil);
+    const vis = rs.slice(0, state.limite);
+    const cab = COLS.map(c => `<th class="ord${c.num ? ' num' : ''}" data-ord="${c.k}">${c.t}${state.ord === c.k ? ' <span class="seta">' + (state.dirOrd > 0 ? '▲' : '▼') + '</span>' : ''}</th>`).join('') + '<th>Situação</th>';
+    const corpo = vis.map(r => `<tr><td>${esc(r.un)}</td><td class="muted">${esc(r.dir)}</td><td>${esc(r.ger)}</td><td class="num">${esc(r.mat)}</td><td class="b nw">${esc(r.nome)}</td><td>${esc(r.safra)}</td><td class="nw">${mesLabel(r.mes)}</td><td class="num">${n(r.prev)}</td><td class="num">${n(r.real)}</td><td>${r.pend ? (r.mes < MES_ATUAL ? '<span class="pill p-at">Pendente (atrasado)</span>' : '<span class="pill p-pe">Pendente</span>') : '<span class="pill p-ok">Realizado</span>'}</td></tr>`).join('');
+    $('tela').innerHTML = `
+      <section class="card flush">
+        <div class="cardhead row"><div><h2 class="sec">Relatório por colaborador</h2><p class="sub">${n(rs.length)} registro(s) nos filtros selecionados. Clique no título de uma coluna para ordenar.</p></div>
+          <button type="button" class="btn btn-pri" id="exportar3">Exportar Excel</button></div>
+        ${rs.length ? `<div class="scroll"><table class="tbl"><thead><tr>${cab}</tr></thead><tbody>${corpo}</tbody></table></div>` : '<p class="vazio">Nenhum registro para os filtros selecionados.</p>'}
+        ${rs.length > state.limite ? `<div class="mais"><span>Mostrando ${n(vis.length)} de ${n(rs.length)}. O Excel sempre leva todos.</span><button type="button" class="btn btn-sec" id="maisLinhas">Mostrar mais 100</button></div>` : ''}
+      </section>`;
+  }
+
+  // ---------- tooltip
+  const tip = $('tip');
+  function mostrarTip(e, html) { tip.innerHTML = html; tip.style.display = 'block'; moverTip(e); }
+  function moverTip(e) {
+    let x = e.clientX + 14, y = e.clientY + 14;
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    if (x + w > innerWidth - 8) x = e.clientX - w - 14;
+    if (y + h > innerHeight - 8) y = e.clientY - h - 14;
+    tip.style.left = x + 'px'; tip.style.top = y + 'px';
+  }
+  function esconderTip() { tip.style.display = 'none'; }
+
+  // ---------- exportação
+  function exportar() {
+    if (typeof XLSX === 'undefined') { alert('Não foi possível carregar o gerador de Excel. Verifique a conexão e tente de novo.'); return; }
+    const rs = ordenar(filtrados());
+    if (!rs.length) { alert('Não há registros para exportar com os filtros atuais.'); return; }
+    const linhas = rs.map(r => ({
+      'Unidade': r.un, 'Diretoria': r.dir, 'Gerência': r.ger, 'Matrícula': r.mat, 'Nome': r.nome,
+      'Safra': r.safra, 'Mês': mesLabel(r.mes), 'Previsto': r.prev, 'Realizado': r.real, 'Pendente': r.pend,
+      'Situação': r.pend ? (r.mes < MES_ATUAL ? 'Pendente (atrasado)' : 'Pendente') : 'Realizado'
+    }));
+    const ws = XLSX.utils.json_to_sheet(linhas);
+    ws['!cols'] = [8, 30, 42, 11, 40, 8, 16, 10, 11, 10, 20].map(w => ({ wch: w }));
+    ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: linhas.length, c: 10 } }) };
+
+    const filtrosTxt = CAMPOS.map(c => [NOMES[c][0], state[c].length ? state[c].map(v => rotulo(c, v)).join(', ') : NOMES[c][1]]);
+    if (state.busca.trim()) filtrosTxt.push(['Busca', state.busca.trim()]);
+    const k = soma(rs);
+    const info = [['Exames Periódicos – Relatório por colaborador'], [],
+      ['Dados atualizados em', D.atualizado ? new Date(D.atualizado).toLocaleString('pt-BR') : '—'],
+      ['Exportado em', new Date().toLocaleString('pt-BR')], [], ['Filtros'], ...filtrosTxt, [],
+      ['Previstos', k.prev], ['Realizados', k.real], ['Pendentes', k.pend], ['Aderência', k.ad == null ? '—' : pct(k.ad)]];
+    const wi = XLSX.utils.aoa_to_sheet(info);
+    wi['!cols'] = [{ wch: 24 }, { wch: 60 }];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Por colaborador');
+    XLSX.utils.book_append_sheet(wb, wi, 'Filtros');
+    const d = new Date();
+    XLSX.writeFile(wb, `exames_periodicos_${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.xlsx`);
+  }
+
+  // ---------- render
+  const TITULOS = { geral: 'Visão geral', rel: 'Relatório por colaborador' };
+  function render() {
+    montarFiltros();
+    const fil = filtrados();
+    kpis(fil);
+    $('titulo').textContent = TITULOS[state.tab];
+    document.querySelectorAll('.navb[data-tab]').forEach(b => b.classList.toggle('ativo', b.getAttribute('data-tab') === state.tab));
+    esconderTip();
+    if (state.tab === 'rel') telaRel(fil); else telaGeral(fil);
+  }
+
+  // ---------- eventos
+  document.addEventListener('click', e => {
+    const t = e.target;
+    const nav = t.closest('.navb[data-tab]');
+    if (nav) { state.tab = nav.getAttribute('data-tab'); state.limite = 100; location.hash = state.tab; render(); return; }
+    if (t.closest('#exportar, #exportar2, #exportar3')) { exportar(); return; }
+    if (t.closest('#recolher')) { const app = $('app'); app.classList.toggle('recolhido'); $('recolher').setAttribute('aria-expanded', !app.classList.contains('recolhido')); return; }
+    if (t.closest('#limpar')) { CAMPOS.forEach(c => { state[c] = []; }); state.busca = ''; $('busca').value = ''; state.aberto = null; state.limite = 100; render(); return; }
+    if (t.closest('#maisLinhas')) { state.limite += 100; render(); return; }
+    const th = t.closest('th[data-ord]');
+    if (th) { const k = th.getAttribute('data-ord'); if (state.ord === k) state.dirOrd = -state.dirOrd; else { state.ord = k; state.dirOrd = 1; } render(); return; }
+    const tira = t.closest('[data-tira]');
+    if (tira) { const c = tira.getAttribute('data-tira'), v = tira.getAttribute('data-valor'); state[c] = state[c].filter(x => x !== v); render(); return; }
+    const dd = t.closest('.dd');
+    if (dd) {
+      const c = dd.getAttribute('data-campo');
+      if (t.closest('.dd-btn')) { state.aberto = state.aberto === c ? null : c; montarFiltros(); return; }
+      const acao = t.closest('[data-dd]');
+      if (acao) { state[c] = acao.getAttribute('data-dd') === 'todos' ? opcoesDe(c).slice() : []; state.limite = 100; render(); return; }
+      return;
+    }
+    if (state.aberto) { state.aberto = null; montarFiltros(); }
+  });
+  document.addEventListener('change', e => {
+    const cb = e.target.closest('.dd-op input');
+    if (!cb) return;
+    const c = cb.closest('.dd').getAttribute('data-campo');
+    const l = state[c].filter(v => v !== cb.value);
+    if (cb.checked) l.push(cb.value);
+    state[c] = l; state.limite = 100;
+    render();
+  });
+  document.addEventListener('input', e => {
+    if (e.target.classList.contains('dd-busca')) {
+      const c = e.target.closest('.dd').getAttribute('data-campo');
+      state.ddBusca[c] = e.target.value;
+      const q = e.target.value.toLowerCase();
+      e.target.closest('.dd').querySelectorAll('.dd-op').forEach(op => { op.hidden = q && op.textContent.toLowerCase().indexOf(q) < 0; });
+    }
+    if (e.target.id === 'busca') { state.busca = e.target.value; state.limite = 100; render(); $('busca').focus(); }
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && state.aberto) { state.aberto = null; montarFiltros(); } });
+
+  if (TITULOS[location.hash.slice(1)]) state.tab = location.hash.slice(1);
+  window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (TITULOS[h] && h !== state.tab) { state.tab = h; render(); } });
+  render();
+}
+</script>
+<script>
+// Acesso pelo login do Portal IP (Supabase). Os dados ficam numa tabela protegida
+// do Supabase: so usuario ativo do portal consegue ler. Nada de dado pessoal no GitHub.
+(async function () {
+  const SB_URL = 'https://umpctnchhmyvpjwxllaj.supabase.co';
+  const SB_KEY = 'sb_publishable_lxiF04jATB1HMLINX-FvOg_3JOjXxrQ';
+  const PORTAL_URL = 'https://tkichelewski-web.github.io/portal-ip/';
+  const msg = h => { document.getElementById('portao-msg').innerHTML = h; };
+  const voltarPortal = '<br><a href="' + PORTAL_URL + '">Ir para o Portal IP</a>';
+  try {
+    if (!window.supabase) throw new Error('biblioteca do Supabase não carregou');
+    const sb = supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, storageKey: 'sistema-ip-auth' } });
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { location.replace(PORTAL_URL + '?voltar=' + encodeURIComponent(location.href.split('#')[0])); return; }
+    const u = session.user;
+    const { data: usr } = await sb.from('usuarios').select('nome,inativo').eq('auth_id', u.id).maybeSingle();
+    if (!usr || usr.inativo) { msg('Seu e-mail não tem acesso ao Portal IP. Fale com o administrador do portal.' + voltarPortal); return; }
+    msg('Carregando os exames…');
+    const { data, error } = await sb.from('exames_snapshot').select('atualizado,linhas').eq('id', 1).maybeSingle();
+    if (error) throw error;
+    if (!data) { msg('Os dados dos exames ainda não foram publicados ou o seu perfil não tem acesso a este painel.' + voltarPortal); return; }
+    window.DADOS = { atualizado: data.atualizado, linhas: data.linhas || [] };
+    const box = document.getElementById('usuario');
+    box.innerHTML = '<span>Conectado como <b></b></span><span class="acoes"><a href="' + PORTAL_URL + '">Portal IP</a><button type="button">Sair</button></span>';
+    box.querySelector('b').textContent = usr.nome || u.email;
+    box.querySelector('button').onclick = async () => { await sb.auth.signOut(); location.href = PORTAL_URL; };
+    box.hidden = false;
+    iniciarPainel();
+    document.getElementById('portao').remove();
+  } catch (e) {
+    msg('Não foi possível abrir o painel: ' + String(e && e.message || e).replace(/[<>&]/g, '') + voltarPortal);
+  }
+})();
+</script>
+</body>
+</html>
