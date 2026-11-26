@@ -185,6 +185,7 @@ html,body{margin:0;background:var(--fundo);color:var(--tinta);font-family:'Open 
       <div class="lbl"><span>Unidade</span><div class="dd" data-campo="un"></div></div>
       <div class="lbl"><span>Diretoria</span><div class="dd" data-campo="dir"></div></div>
       <div class="lbl"><span>Gerência</span><div class="dd" data-campo="ger"></div></div>
+      <div class="lbl"><span>Situação</span><div class="dd" data-campo="sit"></div></div>
       <label class="lbl"><span>Nome ou matrícula</span><input type="search" class="busca" id="busca" placeholder="Buscar colaborador…"></label>
       <button type="button" class="btn btn-sec" id="limpar" style="margin-left:auto">Limpar filtros</button>
     </div>
@@ -238,15 +239,19 @@ html,body{margin:0;background:var(--fundo);color:var(--tinta);font-family:'Open 
   }
 
   // ---------- estado e filtros
-  const CAMPOS = ['safra', 'mes', 'un', 'dir', 'ger'];
-  const NOMES = { safra: ['Safra', 'Todas', 'safras'], mes: ['Mês', 'Todos', 'meses'], un: ['Unidade', 'Todas', 'unidades'], dir: ['Diretoria', 'Todas', 'diretorias'], ger: ['Gerência', 'Todas', 'gerências'] };
+  const CAMPOS = ['safra', 'mes', 'un', 'dir', 'ger', 'sit'];
+  const NOMES = { safra: ['Safra', 'Todas', 'safras'], mes: ['Mês', 'Todos', 'meses'], un: ['Unidade', 'Todas', 'unidades'], dir: ['Diretoria', 'Todas', 'diretorias'], ger: ['Gerência', 'Todas', 'gerências'], sit: ['Situação', 'Todas', 'situações'] };
   const hoje = new Date();
   const sAno = hoje.getMonth() + 1 >= 4 ? hoje.getFullYear() : hoje.getFullYear() - 1;
   const SAFRA_ATUAL = String(sAno).slice(2) + '/' + String(sAno + 1).slice(2);
   const MES_ATUAL = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0');
-  const state = { tab: 'geral', safra: [], mes: [], un: [], dir: [], ger: [], busca: '', aberto: null, ddBusca: {}, limite: 100, ord: 'mes', dirOrd: 1 };
+  const state = { tab: 'geral', safra: [], mes: [], un: [], dir: [], ger: [], sit: [], busca: '', aberto: null, ddBusca: {}, limite: 100, ord: 'mes', dirOrd: 1 };
   if (ROWS.some(r => r.safra === SAFRA_ATUAL)) state.safra = [SAFRA_ATUAL];
   if (ROWS.some(r => r.mes === MES_ATUAL)) state.mes = [MES_ATUAL];
+
+  // situação de cada linha (mesma regra da coluna Situação e do Excel)
+  const SITUACOES = ['Realizado', 'Pendente', 'Pendente (atrasado)'];
+  ROWS.forEach(r => { r.sit = r.pend ? (r.mes < MES_ATUAL ? 'Pendente (atrasado)' : 'Pendente') : 'Realizado'; });
 
   const rotulo = (c, v) => c === 'mes' ? mesLabel(v) : (c === 'un' ? (UNL[v] ? v + ' – ' + UNL[v] : v) : v);
   function opcoesDe(c) {
@@ -257,10 +262,13 @@ html,body{margin:0;background:var(--fundo);color:var(--tinta);font-family:'Open 
     if (c === 'un') return uniq(b1.map(r => r.un));
     const b2 = b1.filter(r => inc(state.un, r.un));
     if (c === 'dir') return uniq(b2.map(r => r.dir));
-    return uniq(b2.filter(r => inc(state.dir, r.dir)).map(r => r.ger));
+    const b3 = b2.filter(r => inc(state.dir, r.dir));
+    if (c === 'ger') return uniq(b3.map(r => r.ger));
+    const b4 = b3.filter(r => inc(state.ger, r.ger));
+    return SITUACOES.filter(s => b4.some(r => r.sit === s));
   }
   function filtradosSemBusca() {
-    return ROWS.filter(r => inc(state.safra, r.safra) && inc(state.mes, r.mes) && inc(state.un, r.un) && inc(state.dir, r.dir) && inc(state.ger, r.ger));
+    return ROWS.filter(r => inc(state.safra, r.safra) && inc(state.mes, r.mes) && inc(state.un, r.un) && inc(state.dir, r.dir) && inc(state.ger, r.ger) && inc(state.sit, r.sit));
   }
   function filtrados() {
     const q = state.busca.trim().toLowerCase();
@@ -320,7 +328,7 @@ html,body{margin:0;background:var(--fundo);color:var(--tinta);font-family:'Open 
     // aderência por mês: só meses até o atual, últimos 12
     // ignora o filtro de mês para mostrar a evolução da safra
     const q = state.busca.trim().toLowerCase();
-    const semMes = ROWS.filter(r => inc(state.safra, r.safra) && inc(state.un, r.un) && inc(state.dir, r.dir) && inc(state.ger, r.ger) &&
+    const semMes = ROWS.filter(r => inc(state.safra, r.safra) && inc(state.un, r.un) && inc(state.dir, r.dir) && inc(state.ger, r.ger) && inc(state.sit, r.sit) &&
       (!q || r.nome.toLowerCase().indexOf(q) >= 0 || String(r.mat).indexOf(q) >= 0));
     const meses = agrupar(semMes.filter(r => r.mes <= MES_ATUAL), 'mes').filter(g => g.prev > 0).sort((a, b) => a.nome < b.nome ? -1 : 1).slice(-12);
     const colHtml = meses.length ? `<div class="colunas">${meses.map((g, i) => `
@@ -367,7 +375,7 @@ html,body{margin:0;background:var(--fundo);color:var(--tinta);font-family:'Open 
     const rs = ordenar(fil);
     const vis = rs.slice(0, state.limite);
     const cab = COLS.map(c => `<th class="ord${c.num ? ' num' : ''}" data-ord="${c.k}">${c.t}${state.ord === c.k ? ' <span class="seta">' + (state.dirOrd > 0 ? '▲' : '▼') + '</span>' : ''}</th>`).join('') + '<th>Situação</th>';
-    const corpo = vis.map(r => `<tr><td>${esc(r.un)}</td><td class="muted">${esc(r.dir)}</td><td>${esc(r.ger)}</td><td class="num">${esc(r.mat)}</td><td class="b nw">${esc(r.nome)}</td><td>${esc(r.safra)}</td><td class="nw">${mesLabel(r.mes)}</td><td class="num">${n(r.prev)}</td><td class="num">${n(r.real)}</td><td>${r.pend ? (r.mes < MES_ATUAL ? '<span class="pill p-at">Pendente (atrasado)</span>' : '<span class="pill p-pe">Pendente</span>') : '<span class="pill p-ok">Realizado</span>'}</td></tr>`).join('');
+    const corpo = vis.map(r => `<tr><td>${esc(r.un)}</td><td class="muted">${esc(r.dir)}</td><td>${esc(r.ger)}</td><td class="num">${esc(r.mat)}</td><td class="b nw">${esc(r.nome)}</td><td>${esc(r.safra)}</td><td class="nw">${mesLabel(r.mes)}</td><td class="num">${n(r.prev)}</td><td class="num">${n(r.real)}</td><td><span class="pill ${r.sit === 'Realizado' ? 'p-ok' : (r.sit === 'Pendente' ? 'p-pe' : 'p-at')}">${r.sit}</span></td></tr>`).join('');
     $('tela').innerHTML = `
       <section class="card flush">
         <div class="cardhead row"><div><h2 class="sec">Relatório por colaborador</h2><p class="sub">${n(rs.length)} registro(s) nos filtros selecionados. Clique no título de uma coluna para ordenar.</p></div>
@@ -397,7 +405,7 @@ html,body{margin:0;background:var(--fundo);color:var(--tinta);font-family:'Open 
     const linhas = rs.map(r => ({
       'Unidade': r.un, 'Diretoria': r.dir, 'Gerência': r.ger, 'Matrícula': r.mat, 'Nome': r.nome,
       'Safra': r.safra, 'Mês': mesLabel(r.mes), 'Previsto': r.prev, 'Realizado': r.real, 'Pendente': r.pend,
-      'Situação': r.pend ? (r.mes < MES_ATUAL ? 'Pendente (atrasado)' : 'Pendente') : 'Realizado'
+      'Situação': r.sit
     }));
     const ws = XLSX.utils.json_to_sheet(linhas);
     ws['!cols'] = [8, 30, 42, 11, 40, 8, 16, 10, 11, 10, 20].map(w => ({ wch: w }));
