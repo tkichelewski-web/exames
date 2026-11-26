@@ -210,11 +210,12 @@ html,body{margin:0;background:var(--fundo);color:var(--tinta);font-family:'Open 
   const MESA = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   const UNL = { JB: 'Jaboticabal', PB: 'Pereira Barreto', PI: 'Pitangueiras' };
 
-  // linha: [unidade, diretoria, gerencia, matricula, nome, safra, ano, mes, previsto, realizado]
+  // linha: [unidade, diretoria, gerencia, matricula, nome, safra, ano, mes, previsto, realizado, situacao]
+  // situacao = STATUS_DASHBOARD do Power BI: REALIZADO, PREVISTO (NO PRAZO) ou PREVISTO (ATRASADO)
   const ROWS = D.linhas.map(l => ({
     un: l[0] || '—', dir: l[1] || 'Não identificado', ger: l[2] || 'Não identificado', mat: l[3], nome: l[4] || '',
     safra: l[5] || '', ano: l[6], m: l[7], mes: l[6] + '-' + String(l[7]).padStart(2, '0'),
-    prev: l[8] || 0, real: l[9] || 0
+    prev: l[8] || 0, real: l[9] || 0, sit: l[10] || ''
   }));
   ROWS.forEach(r => { r.pend = Math.max(0, r.prev - r.real); });
 
@@ -249,9 +250,9 @@ html,body{margin:0;background:var(--fundo);color:var(--tinta);font-family:'Open 
   if (ROWS.some(r => r.safra === SAFRA_ATUAL)) state.safra = [SAFRA_ATUAL];
   if (ROWS.some(r => r.mes === MES_ATUAL)) state.mes = [MES_ATUAL];
 
-  // situação de cada linha (mesma regra da coluna Situação e do Excel)
-  const SITUACOES = ['Realizado', 'Pendente', 'Pendente (atrasado)'];
-  ROWS.forEach(r => { r.sit = r.pend ? (r.mes < MES_ATUAL ? 'Pendente (atrasado)' : 'Pendente') : 'Realizado'; });
+  // situação = mesma do Power BI (STATUS_DASHBOARD da consulta na Senior)
+  const SITUACOES = ['PREVISTO (ATRASADO)', 'PREVISTO (NO PRAZO)', 'REALIZADO'];
+  ROWS.forEach(r => { if (!r.sit) r.sit = r.pend ? (r.mes < MES_ATUAL ? 'PREVISTO (ATRASADO)' : 'PREVISTO (NO PRAZO)') : 'REALIZADO'; });
 
   const rotulo = (c, v) => c === 'mes' ? mesLabel(v) : (c === 'un' ? (UNL[v] ? v + ' – ' + UNL[v] : v) : v);
   function opcoesDe(c) {
@@ -375,7 +376,7 @@ html,body{margin:0;background:var(--fundo);color:var(--tinta);font-family:'Open 
     const rs = ordenar(fil);
     const vis = rs.slice(0, state.limite);
     const cab = COLS.map(c => `<th class="ord${c.num ? ' num' : ''}" data-ord="${c.k}">${c.t}${state.ord === c.k ? ' <span class="seta">' + (state.dirOrd > 0 ? '▲' : '▼') + '</span>' : ''}</th>`).join('') + '<th>Situação</th>';
-    const corpo = vis.map(r => `<tr><td>${esc(r.un)}</td><td class="muted">${esc(r.dir)}</td><td>${esc(r.ger)}</td><td class="num">${esc(r.mat)}</td><td class="b nw">${esc(r.nome)}</td><td>${esc(r.safra)}</td><td class="nw">${mesLabel(r.mes)}</td><td class="num">${n(r.prev)}</td><td class="num">${n(r.real)}</td><td><span class="pill ${r.sit === 'Realizado' ? 'p-ok' : (r.sit === 'Pendente' ? 'p-pe' : 'p-at')}">${r.sit}</span></td></tr>`).join('');
+    const corpo = vis.map(r => `<tr><td>${esc(r.un)}</td><td class="muted">${esc(r.dir)}</td><td>${esc(r.ger)}</td><td class="num">${esc(r.mat)}</td><td class="b nw">${esc(r.nome)}</td><td>${esc(r.safra)}</td><td class="nw">${mesLabel(r.mes)}</td><td class="num">${n(r.prev)}</td><td class="num">${n(r.real)}</td><td><span class="pill ${r.sit === 'REALIZADO' ? 'p-ok' : (r.sit === 'PREVISTO (NO PRAZO)' ? 'p-pe' : 'p-at')}">${esc(r.sit)}</span></td></tr>`).join('');
     $('tela').innerHTML = `
       <section class="card flush">
         <div class="cardhead row"><div><h2 class="sec">Relatório por colaborador</h2><p class="sub">${n(rs.length)} registro(s) nos filtros selecionados. Clique no título de uma coluna para ordenar.</p></div>
