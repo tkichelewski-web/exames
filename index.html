@@ -495,8 +495,8 @@ html,body{margin:0;background:var(--fundo);color:var(--tinta);font-family:'Open 
     const { data: { session } } = await sb.auth.getSession();
     if (!session) { location.replace(PORTAL_URL + '?voltar=' + encodeURIComponent(location.href.split('#')[0])); return; }
     const u = session.user;
-    const { data: usr } = await sb.from('usuarios').select('nome,inativo').eq('auth_id', u.id).maybeSingle();
-    if (!usr || usr.inativo) { msg('Seu e-mail não tem acesso ao Portal IP. Fale com o administrador do portal.' + voltarPortal); return; }
+    const { data: usr } = await sb.from('usuarios').select('nome,ativo').eq('auth_id', u.id).maybeSingle();
+    if (!usr || usr.ativo === false) { msg('Seu e-mail não tem acesso ao Portal IP. Fale com o administrador do portal.' + voltarPortal); return; }
     msg('Carregando os exames…');
     const { data, error } = await sb.from('exames_snapshot').select('atualizado,linhas').eq('id', 1).maybeSingle();
     if (error) throw error;
